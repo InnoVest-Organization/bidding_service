@@ -9,6 +9,7 @@ This service is built using **Spring Boot** with JPA for database interaction an
 ## Features
 
 - **Place Bid**: Allows an investor to place a bid on an invention.
+- **Get Invention Bids**: Retrieves all bids for a specific invention.
 - **Swagger UI**: Auto-generated API documentation accessible through Swagger UI.
 
 ## Technologies
@@ -113,7 +114,47 @@ Place a bid for an invention.
 }
 ```
 
-### 2. **GET /swagger-ui.html**
+### 2. **GET /api/bids/invention/{inventionId}**
+
+Retrieve all bids for a specific invention.
+
+**Path Parameter:**
+- `inventionId`: The ID of the invention to get bids for
+
+**Response Body:**
+
+```json
+{
+    "inventionId": 1,
+    "bids": [
+        {
+            "orderId": 1,
+            "investorId": 123,
+            "bidAmount": 10000,
+            "equity": 5,
+            "selected": false
+        },
+        {
+            "orderId": 2,
+            "investorId": 456,
+            "bidAmount": 15000,
+            "equity": 10,
+            "selected": false
+        }
+    ]
+}
+```
+
+If no bids are found for the specified invention, an empty list is returned:
+
+```json
+{
+    "inventionId": 1,
+    "bids": []
+}
+```
+
+### 3. **GET /swagger-ui.html**
 
 Access the Swagger UI to view and interact with the API documentation.
 

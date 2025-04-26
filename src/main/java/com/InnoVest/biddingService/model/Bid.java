@@ -1,17 +1,15 @@
-package com.InnoVest.biddingService.entity;
+package com.InnoVest.biddingService.model;
 
 import jakarta.persistence.*;
 import lombok.*;
 
-@Entity
-@Table(name = "bidding_data")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class Bidding {
-
+@Entity
+@Table(name = "bidding_data")
+public class Bid {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "Order_ID")
@@ -27,8 +25,8 @@ public class Bidding {
     private Integer bidAmount;
 
     @Column(name = "Equity", nullable = true)
-    private Integer equity;
+    private Integer equity = 0;
 
     @Column(name = "Selected", nullable = true)
-    private Boolean selected;
+    private Boolean selected = false;
 }

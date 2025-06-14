@@ -1,5 +1,17 @@
 package com.InnoVest.biddingService.service.impl;
 
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+
+import com.InnoVest.biddingService.dto.request.InventionBidSelectedRequestDTO;
 import com.InnoVest.biddingService.dto.request.PlaceBidRequestDTO;
 import com.InnoVest.biddingService.dto.request.SelectBidRequestDTO;
 import com.InnoVest.biddingService.dto.response.GetInventionBidsResponseDTO;
@@ -10,12 +22,9 @@ import com.InnoVest.biddingService.mapper.response.PlaceBidResponseMapper;
 import com.InnoVest.biddingService.mapper.response.SelectBidResponseMapper;
 import com.InnoVest.biddingService.model.Bid;
 import com.InnoVest.biddingService.repository.BidRepository;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -23,6 +32,10 @@ import java.util.Optional;
 public class BidService {
 
     private final BidRepository bidRepository;
+    private final RestTemplate restTemplate;
+    
+    @org.springframework.beans.factory.annotation.Value("${invention.service.url}")
+    private String inventionServiceUrl;
 
     public PlaceBidResponseDTO placeBid(PlaceBidRequestDTO request) {
         log.info("Placing bid for Investor {} on Invention {}", request.getInvestorId(), request.getInventionId());
@@ -71,6 +84,52 @@ public class BidService {
         // Save the updated bid
         Bid savedBid = bidRepository.save(bid);
         log.info("Bid selection status updated successfully for Order ID {}", savedBid.getOrderId());
+        
+        // Make additional service call to the invention service when a bid is selected
+        if (request.getSelected()) {
+            try {
+                // Create request payload
+                InventionBidSelectedRequestDTO inventionRequest = new InventionBidSelectedRequestDTO();
+                inventionRequest.setInventionId(savedBid.getInventionId());
+                inventionRequest.setInvestorId(savedBid.getInvestorId());
+                inventionRequest.setIsLive(false);
+                
+                // Set headers
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                HttpEntity<InventionBidSelectedRequestDTO> entity = new HttpEntity<>(inventionRequest, headers);
+                
+                // Make the API call
+                log.info("Notifying invention service about bid selection for invention ID: {}, investor ID: {}",
+                         savedBid.getInventionId(), savedBid.getInvestorId());
+                
+                // Using POST instead of PATCH as the server doesn't support PATCH
+                ResponseEntity<String> response = restTemplate.exchange(
+                    inventionServiceUrl + "/api/inventions/bidSelected",
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+                );
+                
+                // Check if the invention service successfully updated the bid selection
+                if (response.getStatusCode().is2xxSuccessful()) {
+                    log.info("Successfully notified invention service about bid selection: {}", response.getBody());
+                } else {
+                    log.warn("Invention service responded with non-success status: {} - {}", 
+                             response.getStatusCode(), response.getBody());
+                }
+            } catch (org.springframework.web.client.HttpClientErrorException e) {
+                log.error("Client error when notifying invention service: {}, Status code: {}", 
+                          e.getMessage(), e.getStatusCode(), e);
+                // Continue with the process even if this call fails - don't fail the main request
+            } catch (org.springframework.web.client.ResourceAccessException e) {
+                log.error("Cannot connect to invention service: {}", e.getMessage(), e);
+                // Continue with the process even if this call fails - don't fail the main request
+            } catch (Exception e) {
+                log.error("Unexpected error notifying invention service about bid selection: {}", e.getMessage(), e);
+                // Continue with the process even if this call fails - don't fail the main request
+            }
+        }
         
         return SelectBidResponseMapper.toResponseDTO(savedBid);
     }

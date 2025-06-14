@@ -1,10 +1,13 @@
 package com.InnoVest.biddingService.service.impl;
 
 import com.InnoVest.biddingService.dto.request.PlaceBidRequestDTO;
+import com.InnoVest.biddingService.dto.request.SelectBidRequestDTO;
 import com.InnoVest.biddingService.dto.response.GetInventionBidsResponseDTO;
 import com.InnoVest.biddingService.dto.response.PlaceBidResponseDTO;
+import com.InnoVest.biddingService.dto.response.SelectBidResponseDTO;
 import com.InnoVest.biddingService.mapper.response.GetInventionBidsResponseMapper;
 import com.InnoVest.biddingService.mapper.response.PlaceBidResponseMapper;
+import com.InnoVest.biddingService.mapper.response.SelectBidResponseMapper;
 import com.InnoVest.biddingService.model.Bid;
 import com.InnoVest.biddingService.repository.BidRepository;
 import lombok.RequiredArgsConstructor;
@@ -54,5 +57,21 @@ public class BidService {
         // Even if the list is empty, we return a valid response with the inventionId
         // and an empty list (not null)
         return GetInventionBidsResponseMapper.toResponseDTO(inventionId, bids);
+    }
+    
+    public SelectBidResponseDTO selectBid(SelectBidRequestDTO request) {
+        log.info("Updating selection status for Order ID {}: selected={}", request.getOrderId(), request.getSelected());
+        
+        Bid bid = bidRepository.findById(request.getOrderId())
+                .orElseThrow(() -> new RuntimeException("Bid not found with Order ID: " + request.getOrderId()));
+        
+        // Update the selected field
+        bid.setSelected(request.getSelected());
+        
+        // Save the updated bid
+        Bid savedBid = bidRepository.save(bid);
+        log.info("Bid selection status updated successfully for Order ID {}", savedBid.getOrderId());
+        
+        return SelectBidResponseMapper.toResponseDTO(savedBid);
     }
 }

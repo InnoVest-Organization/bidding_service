@@ -1,15 +1,25 @@
 package com.InnoVest.biddingService.controller.publicEP;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.InnoVest.biddingService.dto.request.PlaceBidRequestDTO;
+import com.InnoVest.biddingService.dto.request.SelectBidRequestDTO;
 import com.InnoVest.biddingService.dto.response.GetInventionBidsResponseDTO;
 import com.InnoVest.biddingService.dto.response.PlaceBidResponseDTO;
+import com.InnoVest.biddingService.dto.response.SelectBidResponseDTO;
 import com.InnoVest.biddingService.service.impl.BidService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 @RestController
 @RequestMapping("/api/bids")
 @RequiredArgsConstructor
@@ -33,6 +43,15 @@ public class BidController {
                     "Even if the list is empty, we return a valid response with the inventionId and an empty list (not null)")
     public ResponseEntity<GetInventionBidsResponseDTO> getInventionBids(@PathVariable Integer inventionId) {
         GetInventionBidsResponseDTO response = bidService.getInventionBids(inventionId);
+        return ResponseEntity.ok(response);
+    }
+    
+    @PatchMapping("/select")
+    @Operation(summary = "Select or deselect a bid", 
+               description = "This endpoint allows updating the selection status of a bid. " +
+                    "Set selected=true to select the bid or selected=false to deselect it.")
+    public ResponseEntity<SelectBidResponseDTO> selectBid(@Valid @RequestBody SelectBidRequestDTO requestDTO) {
+        SelectBidResponseDTO response = bidService.selectBid(requestDTO);
         return ResponseEntity.ok(response);
     }
 }

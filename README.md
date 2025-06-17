@@ -2,6 +2,8 @@
 
 ## Overview
 
+![Screenshot 2025-06-17 181518.png](images/Screenshot%202025-06-17%20181518.png)
+
 The **Bidding Service API** allows investors to place bids on inventions. It includes functionality for submitting bids, viewing bids, and managing the bidding process.
 
 This service is built using **Spring Boot** with JPA for database interaction and Swagger for API documentation.
